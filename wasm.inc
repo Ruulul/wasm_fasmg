@@ -114,4 +114,4 @@ namespace inst
 end namespace
 
 db 0, 'asm'
-db 1, 3 dup 2
+db 1, 3 dup 0
