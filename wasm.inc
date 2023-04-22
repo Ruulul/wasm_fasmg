@@ -115,3 +115,49 @@ end namespace
 
 db 0, 'asm'
 db 1, 3 dup 0
+
+calminstruction encode_u number*
+    local byte
+    loop:
+        compute byte, number and 0x7F
+        compute number, number shr 7
+        check number > 0
+        jno emit_byte
+        compute byte, byte or 1 shl 7
+    emit_byte:
+        arrange byte, =db byte
+        assemble byte
+        jyes loop
+        exit
+end calminstruction
+
+calminstruction encode_s number*
+    compute number, (not number) + 1
+    call encode_u, number
+end calminstruction
+
+macro func?! signature&
+    if __file__ = __source__
+        display 'sign: ', `signature, 10
+        macro ?! line&
+            display 'line: ', `line, 10
+            match =end type, line
+                match =func, type
+                    purge ?
+                else
+                    err 'invalid enclosing for func block', 10
+                end match
+            end match
+        end macro
+    end if
+end macro
+
+macro export?! params&
+    if __file__ = __source__
+        match =func name =as string, param
+            display `name, ' going to be exported as "', `string, '"', 10
+        else
+            err 'unrecognized export', 10
+        end match
+    end if
+end macro
