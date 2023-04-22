@@ -63,7 +63,7 @@ namespace inst
         .gt    = 0x5E
         .le    = 0x5F
         .ge    = 0x60
-    f32:
+    f64:
         .const = 0x44
         .eq    = 0x61
         .ne    = 0x62
@@ -71,7 +71,7 @@ namespace inst
         .gt    = 0x64
         .le    = 0x65
         .ge    = 0x66
-    local:
+    ?local:
         .get = 0x20
         .set = 0x21
         .tee = 0x22
@@ -97,10 +97,10 @@ namespace inst
     nop             = 0x01
     block           = 0x02
     loop            = 0x03
-    if              = 0x04
-    else            = 0x05
+    ?if              = 0x04
+    ?else            = 0x05
     
-    end             = 0x0B
+    ?end             = 0x0B
     br              = 0x0C
     br_if           = 0x0D
     br_table        = 0x0E
