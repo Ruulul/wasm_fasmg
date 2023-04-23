@@ -136,28 +136,31 @@ calminstruction encode_s number*
     call encode_u, number
 end calminstruction
 
-macro func?! signature&
-    if __file__ = __source__
-        display 'sign: ', `signature, 10
-        macro ?! line&
-            display 'line: ', `line, 10
-            match =end type, line
-                match =func, type
-                    purge ?
-                else
-                    err 'invalid enclosing for func block', 10
-                end match
-            end match
-        end macro
-    end if
-end macro
-
-macro export?! params&
-    if __file__ = __source__
-        match =func name =as string, param
-            display `name, ' going to be exported as "', `string, '"', 10
-        else
-            err 'unrecognized export', 10
-        end match
-    end if
-end macro
+calminstruction ?! line&
+    check __file__ = __source__
+    jno end_parsing
+    match =func signature, line
+    jyes parse_func
+    match =export signature, line
+    jyes parse_export
+    match _instr signature, line
+    jyes parse_instr
+    jno end_parsing
+    parse_instr:
+        stringify _instr
+        stringify signature
+        display 'line: '
+        display _instr
+        display ' '
+        display signature
+        display 10
+        jyes end_parsing
+    parse_func:
+    parse_export:
+        stringify signature
+        display 'func/expr: '
+        display signature
+        display 10
+    end_parsing:
+        exit
+end calminstruction
