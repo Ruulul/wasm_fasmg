@@ -113,6 +113,10 @@ namespace inst
     select_t        = 0x1C
 end namespace
 
+define section? section
+define type? type
+define inst? inst
+
 db 0, 'asm'
 db 1, 3 dup 0
 
@@ -137,6 +141,7 @@ calminstruction encode_s number*
 end calminstruction
 
 calminstruction ?! line&
+    local _instr, signature
     check __file__ = __source__
     jno end_parsing
 
