@@ -113,9 +113,6 @@ namespace inst
     select_t        = 0x1C
 end namespace
 
-define section? section
-define type? type
-define inst? inst
 
 db 0, 'asm'
 db 1, 3 dup 0
@@ -140,26 +137,48 @@ calminstruction encode_s number*
     call encode_u, number
 end calminstruction
 
+macro calminstruction?.debug? value*, string
+    stringify value
+    display string
+    display value
+    display 10
+end macro
+
 calminstruction ?! line&
-    local _instr, signature
+    local instr, namespace, opcode, signature
     check __file__ = __source__
     jno end_parsing
 
     match =func signature, line
     jyes parse_func
+    
     match =export signature, line
     jyes parse_export
-    match _instr signature, line
+
+    match namespace.instr signature, line
+    jyes parse_namespaced_instr
+    match instr signature, line
     jyes parse_instr
+    match instr, line
+    jyes parse_simple_instr
     
-    jump end_parsing
+    debug line, 'non parsed line: '
+
+    exit
     
     parse_func:
+        debug signature, 'func sign: '
         jump end_parsing
-    parse_instr:
-        jump end_parsing
-    parse_export:
-        jump end_parsing
-    end_parsing:
+    parse_namespaced_instr:
+        arrange opcode, =db =inst.namespace.instr
+        assemble opcode
+        call encode_u, signature
         exit
+    parse_instr:
+    parse_simple_instr:
+        exit
+    parse_export:
+        debug signature, 'expr sign: '
+        exit
+    end_parsing:
 end calminstruction
