@@ -139,28 +139,22 @@ end calminstruction
 calminstruction ?! line&
     check __file__ = __source__
     jno end_parsing
+
     match =func signature, line
     jyes parse_func
     match =export signature, line
     jyes parse_export
     match _instr signature, line
     jyes parse_instr
-    jno end_parsing
-    parse_instr:
-        stringify _instr
-        stringify signature
-        display 'line: '
-        display _instr
-        display ' '
-        display signature
-        display 10
-        jyes end_parsing
+    
+    jump end_parsing
+    
     parse_func:
+        jump end_parsing
+    parse_instr:
+        jump end_parsing
     parse_export:
-        stringify signature
-        display 'func/expr: '
-        display signature
-        display 10
+        jump end_parsing
     end_parsing:
         exit
 end calminstruction
