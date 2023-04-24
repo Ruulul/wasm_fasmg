@@ -119,17 +119,23 @@ db 1, 3 dup 0
 define sections_names custom, type, import, func, table, mem, global, export, start, elem, code, data
 iteratelist name, sections_names
         name#_section:
+            if name#_section_content <> 0
+                db name#_section_content
+            end if
 end iterate
-virtual at 0
-    iteratelist name, sections_names
+iteratelist name, sections_names
+    virtual at 0
         name::
-    end iterate
-end virtual
+    end virtual
+end iterate
+    
 postpone
     iteratelist name, sections_names
         if sizeof name > 0
-            ; need to write section id and size of section here
-            load name#_section:sizeof name from name:0
+            ; TODO: need to write section id and size of section here
+            load name#_section_content:sizeof name from name:0
+        else
+            name#_section_content = 0
         end if
     end iterate
 end postpone
@@ -168,7 +174,7 @@ end macro
 
 macro calminstruction?.start_virtual? section
     local text
-    arrange text, =virtual =at =section
+    arrange text, =virtual =section
     assemble text
 end macro
 macro calminstruction?.end_virtual?
