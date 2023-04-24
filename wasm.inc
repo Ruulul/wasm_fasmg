@@ -171,15 +171,25 @@ macro calminstruction?.debug? value*, string
     display 10
 end macro
 
+calminstruction calminstruction?.initsym? variable*,value&
+    publish variable, value
+end calminstruction
+calminstruction calminstruction?.asm? line&
+        local   name, i
+        initsym name, name.0
+        match   name.i, name
+        compute i, i+1
+        arrange name, name.i
+        publish name:, line
+        arrange line, =assemble name
+        assemble line
+end calminstruction   
+
 macro calminstruction?.start_virtual? section
-    local text
-    arrange text, =virtual =section
-    assemble text
+    asm virtual section
 end macro
 macro calminstruction?.end_virtual?
-    local text
-    arrange text, =end =virtual
-    assemble text
+    asm end virtual
 end macro
 calminstruction ?! line&
     local instr, namespace, opcode, section, signature
