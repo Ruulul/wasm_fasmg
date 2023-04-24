@@ -120,11 +120,7 @@ end iterate
     
 postpone
     iteratelist name, sections_names
-        if sizeof name > 0
-            load name#_section:sizeof name from name:0
-        else
-            name#_section = 0
-        end if
+        load name#_section:sizeof name from name:0
     end iterate
 end postpone
 
