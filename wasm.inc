@@ -167,8 +167,9 @@ macro calminstruction?.debug? value*, string
 end macro
 
 macro calminstruction?.start_virtual? section
-    arrange section, =virtual =at section
-    assemble section
+    local text
+    arrange text, =virtual =at =section
+    assemble text
 end macro
 macro calminstruction?.end_virtual?
     local text
@@ -201,24 +202,21 @@ calminstruction ?! line&
         debug signature, 'func sign: '
         exit
     parse_namespaced_instr:
-        arrange section, =code
-        start_virtual section
+        start_virtual code
         arrange opcode, =db =inst.namespace.instr
         assemble opcode
         call encode_u, signature
         end_virtual
         exit
     parse_instr:
-        arrange section, =code
-        start_virtual section
+        start_virtual code
         arrange opcode, =db =inst.instr
         assemble opcode
         call encode_u, signature
         end_virtual
         exit
     parse_simple_instr:
-        arrange section, =code
-        start_virtual section
+        start_virtual code
         arrange opcode, =db =inst.instr
         assemble opcode
         end_virtual
@@ -227,8 +225,7 @@ calminstruction ?! line&
         match kind identifier =as name, signature
         transform kind
         transform identifier
-        arrange section, =export
-        start_virtual section
+        start_virtual export
         arrange name, =db name
         arrange kind, =db 0
         arrange identifier, =db 0
