@@ -1,19 +1,9 @@
 format binary as 'wasm'
 
-namespace section
-    custom.id  = 0
-    type.id    = 1
-    import.id  = 2
-    func.id    = 3
-    table.id   = 4
-    mem.id     = 5
-    global.id  = 6
-    export.id  = 7
-    start.id   = 8
-    elem.id    = 9
-    code.id    = 10
-    data.id    = 11
-end namespace
+define sections_names custom, type, import, func, table, mem, global, export, start, elem, code, data
+iteratelist name, sections_names
+    section.name.id = % - 1
+end iterate
 namespace type
     i32         = 0x7F
     i64         = 0x7E
@@ -115,10 +105,10 @@ end namespace
 
 db 0, 'asm'
 db 1, 3 dup 0
-
-define sections_names custom, type, import, func, table, mem, global, export, start, elem, code, data
 iteratelist name, sections_names
     if name#_section <> 0
+        db section.name.id
+        encode_u sizeof name
         db name#_section
     end if
 end iterate
@@ -131,7 +121,6 @@ end iterate
 postpone
     iteratelist name, sections_names
         if sizeof name > 0
-            ; TODO: need to write section id and size of section here
             load name#_section:sizeof name from name:0
         else
             name#_section = 0
