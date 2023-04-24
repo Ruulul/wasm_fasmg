@@ -113,9 +113,32 @@ namespace inst
     select_t        = 0x1C
 end namespace
 
-
 db 0, 'asm'
 db 1, 3 dup 0
+
+define sections_names custom, type, import, func, table, mem, global, export, start, elem, code, data
+iteratelist name, sections_names
+        name#_section:
+end iterate
+virtual at 0
+    iteratelist name, sections_names
+        name::
+    end iterate
+end virtual
+postpone
+    iteratelist name, sections_names
+        if sizeof name > 0
+            ; need to write section id and size of section here
+            load name#_section:sizeof name from name:0
+        end if
+    end iterate
+end postpone
+
+calminstruction iteratelist?! param, var
+    transform var
+    arrange param, =iterate param, var
+    assemble param
+end calminstruction
 
 calminstruction encode_u number*
     local byte
@@ -129,7 +152,6 @@ calminstruction encode_u number*
         arrange byte, =db byte
         assemble byte
         jyes loop
-        exit
 end calminstruction
 
 calminstruction encode_s number*
@@ -144,10 +166,19 @@ macro calminstruction?.debug? value*, string
     display 10
 end macro
 
+macro calminstruction?.start_virtual? section
+    arrange section, =virtual =at section
+    assemble section
+end macro
+macro calminstruction?.end_virtual?
+    local text
+    arrange text, =end =virtual
+    assemble text
+end macro
 calminstruction ?! line&
-    local instr, namespace, opcode, signature
+    local instr, namespace, opcode, section, signature
     check __file__ = __source__
-    jno end_parsing
+    jno assemble_line
 
     match =func signature, line
     jyes parse_func
@@ -168,17 +199,44 @@ calminstruction ?! line&
     
     parse_func:
         debug signature, 'func sign: '
-        jump end_parsing
+        exit
     parse_namespaced_instr:
+        arrange section, =code
+        start_virtual section
         arrange opcode, =db =inst.namespace.instr
         assemble opcode
         call encode_u, signature
+        end_virtual
         exit
     parse_instr:
+        arrange section, =code
+        start_virtual section
+        arrange opcode, =db =inst.instr
+        assemble opcode
+        call encode_u, signature
+        end_virtual
+        exit
     parse_simple_instr:
+        arrange section, =code
+        start_virtual section
+        arrange opcode, =db =inst.instr
+        assemble opcode
+        end_virtual
         exit
     parse_export:
-        debug signature, 'expr sign: '
+        match kind identifier =as name, signature
+        transform kind
+        transform identifier
+        arrange section, =export
+        start_virtual section
+        arrange name, =db name
+        arrange kind, =db 0
+        arrange identifier, =db 0
+        assemble name
+        assemble kind
+        assemble identifier
+        end_virtual
         exit
-    end_parsing:
+    assemble_line:
+        assemble line
 end calminstruction
