@@ -71,8 +71,8 @@ macro calminstruction?.debug? var*, format
     display 10
 end macro
 macro calminstruction?.checksym? name*
-        compute name, -1
-        arrange name, name      ; forced error
+    publish name:, name
+    publish name:, name
 end macro
 macro calminstruction?.start_virtual? section
     asm virtual section
