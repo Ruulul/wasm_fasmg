@@ -58,6 +58,7 @@ namespace inst
         .le_u  = 0x4D
         .ge_s  = 0x4E
         .ge_u  = 0x4F
+        .add   = 0x6A
     i64:
         .const = 0x42
         .eqz   = 0x50
@@ -225,12 +226,10 @@ calminstruction ?! line&
     match =export signature, line
     jyes parse_export
 
-    match namespace.instr signature, line
+    match namespace.instr signature?, line
     jyes parse_namespaced_instr
-    match instr signature, line
+    match instr signature?, line
     jyes parse_instr
-    match instr, line
-    jyes parse_simple_instr
     
     exit
     
@@ -285,13 +284,17 @@ calminstruction ?! line&
             compute section.func.index, section.func.index + 1
             exit
             link_identifier:
+                publish identifier, section.func.index
                 jump parse_func_1_continue
     parse_namespaced_instr:
         local opcode
         start_virtual code
             arrange opcode, =db =inst.namespace.instr
             assemble opcode
+            match ,signature
+            jyes parse_namespaced_instr__skip_signature
             call encode_u, signature
+            parse_namespaced_instr__skip_signature:
         end_virtual
         exit
     parse_instr:
@@ -301,7 +304,10 @@ calminstruction ?! line&
         start_virtual code
             arrange opcode, =db =inst.instr
             assemble opcode
+            match ,signature
+            jyes parse_inst__skip_signature
             call encode_u, signature
+            parse_inst__skip_signature:
         end_virtual
         exit
         close_func_body:
@@ -310,13 +316,6 @@ calminstruction ?! line&
                 asm end_vector
             end_virtual
             exit
-    parse_simple_instr:
-        local opcode
-        start_virtual code
-            arrange opcode, =db =inst.instr
-            assemble opcode
-        end_virtual
-        exit
     parse_export:
         local kind, identifier, name
         match kind identifier =as name, signature
@@ -325,7 +324,7 @@ calminstruction ?! line&
                 arrange name, =db name
             asm end_vector
             arrange kind, =db =export.kind
-            arrange identifier, =db 0
+            arrange identifier, =db identifier
             assemble name
             assemble kind
             assemble identifier
