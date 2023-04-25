@@ -1,7 +1,7 @@
 include 'wasm.inc'
 
-func $main result i32
+func $main param result i32 local
     i32.const 42
     return
-end
+end func
 export func $main as "main"

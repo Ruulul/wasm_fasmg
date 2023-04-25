@@ -1,9 +1,34 @@
 format binary as 'wasm'
 
+vector_count? = 0
+vector_id? =: 0
+vector_start? =: 0
+calminstruction start_vector    
+    local vector, tmp
+    compute tmp, vector_count
+    take vector_id, tmp
+    compute vector_count, vector_count + 1
+    arrange vector, =vector_#vector_id
+    call encode_u, vector
+    compute tmp, $
+    take vector_start, tmp
+end calminstruction
+calminstruction end_vector
+    local vector, length
+    arrange vector, =vector_#vector_id
+    compute length, $ - vector_start
+    publish vector, length
+    take ,vector_start
+    take ,vector_id
+end calminstruction
+
 define sections_names custom, type, import, func, table, mem, global, export, start, elem, code, data
 iteratelist name, sections_names
     section.name.id = % - 1
+    section.name.count = 0
+    section.name.index = 0
 end iterate
+type?:
 namespace type
     i32         = 0x7F
     i64         = 0x7E
@@ -18,6 +43,7 @@ namespace type
     const       = 0x00
     var         = 0x01
 end namespace
+inst?:
 namespace inst
     i32:
         .const = 0x41
@@ -102,14 +128,24 @@ namespace inst
     select          = 0x1B
     select_t        = 0x1C
 end namespace
+namespace export
+    func    = 0x00
+    table   = 0x01
+    mem     = 0x02
+    global  = 0x03
+end namespace
+
+define section? section
 
 db 0, 'asm'
 db 1, 3 dup 0
 iteratelist name, sections_names
     if name#_section <> 0
         db section.name.id
-        encode_u sizeof name
+        start_vector
+        encode_u section.name.count
         db name#_section
+        end_vector
     end if
 end iterate
 iteratelist name, sections_names
@@ -149,13 +185,6 @@ calminstruction encode_s number*
     call encode_u, number
 end calminstruction
 
-macro calminstruction?.debug? value*, string
-    stringify value
-    display string
-    display value
-    display 10
-end macro
-
 calminstruction calminstruction?.initsym? variable*,value&
     publish variable, value
 end calminstruction
@@ -169,15 +198,24 @@ calminstruction calminstruction?.asm? line&
         arrange line, =assemble name
         assemble line
 end calminstruction   
-
+macro calminstruction?.debug? var*, format
+    local tmp
+    arrange tmp, var
+    stringify tmp
+    display format
+    display "'"
+    display tmp
+    display "'"
+    display 10
+end macro
 macro calminstruction?.start_virtual? section
     asm virtual section
 end macro
-macro calminstruction?.end_virtual?
-    asm end virtual
-end macro
+calminstruction calminstruction?.end_virtual?
+    asm asm end virtual
+end calminstruction
 calminstruction ?! line&
-    local instr, namespace, opcode, section, signature
+    local instr, namespace, signature
     check __file__ = __source__
     jno assemble_line
 
@@ -194,44 +232,103 @@ calminstruction ?! line&
     match instr, line
     jyes parse_simple_instr
     
-    debug line, 'non parsed line: '
-
     exit
     
     parse_func:
-        debug signature, 'func sign: '
+        local identifier, params, result, locals
+        arrange identifier,
+        arrange params,
+        arrange result,
+        arrange locals,
+        match identifier? =param params? =result result? =local locals?, signature
+        jyes parse_func_1 ;000
+
         exit
+        
+        parse_func_1:
+            compute section.type.count, section.type.count + 1
+            compute section.func.count, section.func.count + 1
+            compute section.code.count, section.code.count + 1
+            start_virtual type
+                asm db type.func
+                asm start_vector
+                    match ,params
+                    jyes parse_func_skip_params
+                    arrange params, =db =type.params
+                    assemble params
+                    parse_func_skip_params:
+                asm end_vector
+                asm start_vector
+                    match ,result
+                    jyes parse_func_skip_result
+                    arrange result, =db =type.result
+                    assemble result
+                    parse_func_skip_result:
+                asm end_vector
+            end_virtual
+            start_virtual func
+                asm db section.func.index
+                match ,identifier
+                jno link_identifier
+                parse_func_1_continue:
+            end_virtual
+            start_virtual code
+                asm start_vector
+                    asm start_vector
+                        match ,locals
+                        jyes parse_func_skip_locals
+                        arrange locals, =db =type.locals
+                        assemble locals
+                        parse_func_skip_locals:
+                    asm end_vector
+            end_virtual
+            compute section.func.index, section.func.index + 1
+            exit
+            link_identifier:
+                jump parse_func_1_continue
     parse_namespaced_instr:
+        local opcode
         start_virtual code
-        arrange opcode, =db =inst.namespace.instr
-        assemble opcode
-        call encode_u, signature
+            arrange opcode, =db =inst.namespace.instr
+            assemble opcode
+            call encode_u, signature
         end_virtual
         exit
     parse_instr:
+        local opcode
+        match =end =func, line
+        jyes close_func_body
         start_virtual code
-        arrange opcode, =db =inst.instr
-        assemble opcode
-        call encode_u, signature
+            arrange opcode, =db =inst.instr
+            assemble opcode
+            call encode_u, signature
         end_virtual
         exit
+        close_func_body:
+            start_virtual code
+                asm db inst.end
+                asm end_vector
+            end_virtual
+            exit
     parse_simple_instr:
+        local opcode
         start_virtual code
-        arrange opcode, =db =inst.instr
-        assemble opcode
+            arrange opcode, =db =inst.instr
+            assemble opcode
         end_virtual
         exit
     parse_export:
+        local kind, identifier, name
         match kind identifier =as name, signature
-        transform kind
-        transform identifier
         start_virtual export
-        arrange name, =db name
-        arrange kind, =db 0
-        arrange identifier, =db 0
-        assemble name
-        assemble kind
-        assemble identifier
+            asm start_vector
+                arrange name, =db name
+            asm end_vector
+            arrange kind, =db =export.kind
+            arrange identifier, =db 0
+            assemble name
+            assemble kind
+            assemble identifier
         end_virtual
         exit
     assemble_line:
