@@ -319,6 +319,7 @@ calminstruction ?! line&
     parse_export:
         local kind, identifier, name
         match kind identifier =as name, signature
+        compute section.export.count, section.export.count + 1
         start_virtual export
             asm start_vector
                 arrange name, =db name
