@@ -4,7 +4,7 @@ include 'macros.inc'
 define sections_names custom, type, import, func, table, mem, global, export, start, elem, code, data
 iteratelist name, sections_names
     section.name.id = % - 1
-    section.name.count = 0
+    section.name.count = 0 
     section.name.index = 0
 end iterate
 type?:
@@ -123,7 +123,7 @@ iteratelist name, sections_names
     if name#_section <> 0
         db section.name.id
         start_vector
-        encode_u section.name.count
+        encode_u section.name.final_count
         db name#_section
         end_vector
     end if
@@ -137,6 +137,7 @@ end iterate
 postpone
     iteratelist name, sections_names
         load name#_section:sizeof name from name:0
+        section.name.final_count := section.name.count
     end iterate
 end postpone
 
