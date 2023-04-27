@@ -29,7 +29,6 @@ end calminstruction
 
 calminstruction encode_u number*
     local byte
-    debug number, 'encoding '
     loop:
         compute byte, number and 0x7F
         compute number, number shr 7

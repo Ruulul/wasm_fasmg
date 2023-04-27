@@ -192,7 +192,9 @@ calminstruction ?! line&
                 asm end_vector
             end_virtual
             start_virtual func
-                asm db section.func.index
+                compute tmp, section.func.index
+                arrange tmp, =db tmp
+                assemble tmp
                 match ,identifier
                 jno link_identifier
                 parse_func_1_continue:
@@ -207,15 +209,10 @@ calminstruction ?! line&
                         parse_func_skip_locals:
                     asm end_vector
             end_virtual
-            compute count, section.func.index + 1
-            compute section.func.index, count
-            debug count, 'the next func id is '
+            compute section.func.index, section.func.index + 1
             exit
             link_identifier:
-                compute id, section.func.index
-                debug identifier, 'identifier: '
-                debug id, 'id: '
-                publish identifier, id
+                publish identifier, section.func.index
                 jump parse_func_1_continue
     parse_namespaced_instr:
         local opcode
@@ -252,12 +249,12 @@ calminstruction ?! line&
         match kind identifier =as name, signature
         compute section.export.count, section.export.count + 1
         start_virtual export
-            asm start_vector
-                arrange name, =db name
-            asm end_vector
+            arrange name, =db name
             arrange kind, =db =export.kind
             arrange identifier, =db identifier
-            assemble name
+            asm start_vector
+                assemble name
+            asm end_vector
             assemble kind
             assemble identifier
         end_virtual
