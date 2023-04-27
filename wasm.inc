@@ -120,24 +120,20 @@ define section? section
 db 0, 'asm'
 db 1, 3 dup 0
 iteratelist name, sections_names
-    if name#_section <> 0
-        db section.name.id
-        start_vector
-        encode_u section.name.final_count
-        db name#_section
-        end_vector
-    end if
-end iterate
-iteratelist name, sections_names
     virtual at 0
         name::
     end virtual
 end iterate
-    
 postpone
     iteratelist name, sections_names
-        load name#_section:sizeof name from name:0
-        section.name.final_count := section.name.count
+        if sizeof name > 0
+            db section.name.id
+            start_vector
+                encode_u section.name.count
+                load name#_section:sizeof name from name:0
+                db name#_section
+            end_vector
+        end if
     end iterate
 end postpone
 
@@ -240,7 +236,7 @@ calminstruction ?! line&
         exit
         close_func_body:
             start_virtual code
-                asm db inst.end
+                    asm db inst.end
                 asm end_vector
             end_virtual
             exit
