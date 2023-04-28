@@ -161,10 +161,10 @@ calminstruction ?! line&
         arrange params,
         arrange result,
         arrange locals,
-        match identifier? =param params? =result result? =local locals?, signature
+        match identifier =param params? =result result? =local locals?, signature
         jyes parse_func_1 ;000
 
-        exit
+        err 'malformed function'
         
         parse_func_1:
             compute section.type.count, section.type.count + 1
@@ -208,7 +208,7 @@ calminstruction ?! line&
             compute section.func.index, section.func.index + 1
             exit
             link_identifier:
-                publish identifier, section.func.index
+                publish identifier:, section.func.index
                 jump parse_func_1_continue
     parse_namespaced_instr:
         local opcode

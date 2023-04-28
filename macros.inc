@@ -16,7 +16,7 @@ calminstruction end_vector
     local vector, length
     arrange vector, =vector_#vector_id
     compute length, $ - vector_start
-    publish vector, length
+    publish vector:, length
     take ,vector_start
     take ,vector_id
 end calminstruction
