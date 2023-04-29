@@ -4,7 +4,10 @@ const read = createInterface(process.stdin, process.stdout)
 const buffer = await readFile('test.wasm')
 const valid_buffer = WebAssembly.validate(buffer)
 console.log(`the compiled assembly is ${valid_buffer ? '' : 'not '}valid!`)
-if (!valid_buffer) process.exit(0)
+if (!valid_buffer) {
+    read.close()
+    process.exit(0)
+}
 const { instance } = await WebAssembly.instantiate(buffer)
 for (const [name, func] of Object.entries(instance.exports)) {
     let params
