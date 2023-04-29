@@ -144,6 +144,9 @@ calminstruction ?! line&
 
     match =func signature, line
     jyes parse_func
+
+    match =start =func signature?, line
+    jyes start_func
     
     match =export signature, line
     jyes parse_export
@@ -160,8 +163,7 @@ calminstruction ?! line&
         arrange identifier,
         arrange params,
         arrange result,
-        arrange locals,
-        match identifier =param params? =result result? =local locals?, signature
+        match (result?) identifier(params?), signature
         jyes parse_func_1 ;000
 
         err 'malformed function'
@@ -195,21 +197,27 @@ calminstruction ?! line&
                 jno link_identifier
                 parse_func_1_continue:
             end_virtual
-            start_virtual code
-                asm start_vector
-                    asm start_vector
-                        match ,locals
-                        jyes parse_func_skip_locals
-                        arrange locals, =db =type.locals
-                        assemble locals
-                        parse_func_skip_locals:
-                    asm end_vector
-            end_virtual
             compute section.func.index, section.func.index + 1
             exit
             link_identifier:
+                arrange identifier, =user_scope.identifier
                 publish identifier:, section.func.index
                 jump parse_func_1_continue
+    start_func:
+        local locals
+        arrange locals,
+        match locals, signature
+        start_virtual code
+            asm start_vector
+                asm start_vector
+                    match ,locals
+                    jyes parse_func_skip_locals
+                    arrange locals, =db =type.locals
+                    assemble locals
+                    parse_func_skip_locals:
+                asm end_vector
+        end_virtual
+        exit
     parse_namespaced_instr:
         local opcode
         start_virtual code
@@ -247,7 +255,7 @@ calminstruction ?! line&
         start_virtual export
             arrange name, =db name
             arrange kind, =db =export.kind
-            arrange identifier, =db identifier
+            arrange identifier, =db =user_scope.identifier
             asm start_vector
                 assemble name
             asm end_vector
