@@ -14,7 +14,8 @@ for (const [name, func] of Object.entries(instance.exports)) {
             Array(func.length)
             .fill()
             .map((_, i)=>
-                question(`insert the param n ${i} for ${name}: `).then(JSON.parse)
+                question(`insert the param n ${i} for ${name}: `)
+                .then(JSON.parse)
             )
         )
         
