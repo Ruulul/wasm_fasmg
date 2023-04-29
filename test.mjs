@@ -2,8 +2,10 @@ import { readFile } from 'fs/promises'
 import { createInterface } from 'readline'
 const read = createInterface(process.stdin, process.stdout)
 const buffer = await readFile('test.wasm')
+const valid_buffer = WebAssembly.validate(buffer)
+console.log(`the compiled assembly is ${valid_buffer ? '' : 'not '}valid!`)
+if (!valid_buffer) process.exit(0)
 const { instance } = await WebAssembly.instantiate(buffer)
-console.log(`the compiled assembly is ${WebAssembly.validate(buffer) ? '' : 'not '}valid!`)
 for (const [name, func] of Object.entries(instance.exports)) {
     let params
     if (func.length) 
