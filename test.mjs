@@ -18,7 +18,7 @@ for (const [name, func] of Object.entries(instance.exports)) {
             )
         )
         
-    console.log(`${name} runs as ${func.apply(undefined, params && params)}`)
+    console.log(`${name} returns ${func.apply(undefined, params && params)}`)
 }
 read.close()
 
